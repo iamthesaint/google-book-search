@@ -99,13 +99,8 @@ const resolvers = {
 
     addBook: async (_parent: any, { input }: AddBookArgs, context: any) => {
       if (context.user) {
-
-        let book = await Book.findOne({ bookId: input.bookId });
-
-        if (!book) {
-          book = await Book.create(input);
-        }
-
+        const existingBook = await Book.findOne({ bookId: input.bookId });
+        const book = existingBook || await Book.create(input);
         // Add the book's `_id` (MongoDB ID) to the user's savedBooks array
         const updatedUser = await User.findOneAndUpdate(
           { _id: context.user._id },

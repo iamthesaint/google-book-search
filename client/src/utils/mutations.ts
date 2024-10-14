@@ -34,14 +34,17 @@ export const ADD_BOOK = gql`
   mutation AddBook($input: BookInput!) {
     addBook(input: $input) {
       _id
-      bookId
-      title
-      authors
-      description
-      image
-      link
+      username
+      savedBooks {
+        bookId
+        title
+        authors
+        description
+        image
+        link
     }
   }
+}
 `;
 
 // remove a book from the user's savedBooks array

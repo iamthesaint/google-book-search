@@ -1,8 +1,8 @@
-import { useQuery, useMutation } from '@apollo/client';
-import { Container, Card, Button, Row, Col } from 'react-bootstrap';
-import { GET_ME } from '../utils/queries';
-import { REMOVE_BOOK } from '../utils/mutations';
-import Auth from '../utils/auth';
+import { useQuery, useMutation } from "@apollo/client";
+import { Container, Card, Button, Row, Col } from "react-bootstrap";
+import { GET_ME } from "../utils/queries";
+import { REMOVE_BOOK } from "../utils/mutations";
+import Auth from "../utils/auth";
 
 const SavedBooks = () => {
   // gql query to get the logged-in user's saved books
@@ -41,12 +41,12 @@ const SavedBooks = () => {
               data: { me: removeBook },
             });
           } catch (e) {
-            console.error('Error updating cache after deleting book', e);
+            console.error("Error updating cache after deleting book", e);
           }
         },
       });
     } catch (err) {
-      console.error('Error deleting book', err);
+      console.error("Error deleting book", err);
     }
   };
 
@@ -66,9 +66,9 @@ const SavedBooks = () => {
         <h2 className="pt-5">
           {userData.savedBooks.length
             ? `Viewing ${userData.savedBooks.length} saved ${
-                userData.savedBooks.length === 1 ? 'book' : 'books'
+                userData.savedBooks.length === 1 ? "book" : "books"
               }:`
-            : 'You have no saved books!'}
+            : "You have no saved books!"}
         </h2>
         <Row>
           {userData.savedBooks.map(
@@ -90,9 +90,7 @@ const SavedBooks = () => {
                   )}
                   <Card.Body>
                     <Card.Title>{book.title}</Card.Title>
-                    <p className="small">
-                      Authors: {book.authors.join(', ')}
-                    </p>
+                    <p className="small">Authors: {book.authors.join(", ")}</p>
                     <Card.Text>{book.description}</Card.Text>
                     <Button
                       className="btn-block btn-danger"

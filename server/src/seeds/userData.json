@@ -1,17 +1,17 @@
 [
     {
-        "username": "JollyGuru",
-        "email": "jolly@guru.com",
+        "username": "Michaelangelo",
+        "email": "mike@tmnt.com",
         "password": "password"
     },
     {
-        "username": "SunnyScribe",
-        "email": "sunny@scribe.com",
+        "username": "Raphael",
+        "email": "ralph@tmnt.com",
         "password": "password"
     },
     {
-        "username": "RadiantComet",
-        "email": "radiant@comet.com",
+        "username": "Donatello",
+        "email": "donny@tmnt.com",
         "password": "password"
     }
 ]

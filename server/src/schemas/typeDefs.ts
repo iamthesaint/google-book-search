@@ -1,13 +1,6 @@
 import { gql } from 'graphql-tag';
 
 const typeDefs = gql`
-  type User {
-    _id: ID
-    username: String!
-    email: String!
-    password: String!
-    savedBooks: [Book]
-  }
 
   type Book {
     _id: ID
@@ -17,6 +10,14 @@ const typeDefs = gql`
     description: String
     image: String
     link: String
+  }
+
+  type User {
+    _id: ID
+    username: String!
+    email: String!
+    password: String!
+    savedBooks: [Book]
   }
 
 #  defines the boook input type, which is used as an argument when adding a book to a user's list of saved books
