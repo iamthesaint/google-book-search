@@ -3,9 +3,9 @@ export interface GoogleAPIVolumeInfo {
     authors: string[];
     description: string;
     imageLinks: {
-      smallThumbnail: string;
       thumbnail: string;
     };
+    infoLink: string;
   }
   
   export interface GoogleAPIBook {

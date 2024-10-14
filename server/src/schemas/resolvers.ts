@@ -26,93 +26,90 @@ interface BookArgs {
 interface AddBookArgs {
   input: {
     bookId: string;
+    title: string;
     authors: [string];
     description: string;
-    title: string;
     image: string;
     link: string;
   };
 }
 
+interface SearchBooksArgs {
+  searchInput: string;
+}
+
 const resolvers = {
   Query: {
     users: async () => {
-      return User.find().populate("books");
+      return User.find().populate("savedBooks");
     },
     user: async (_parent: any, { username }: UserArgs) => {
-      return User.findOne({ username }).populate("books");
+      return User.findOne({ username }).populate("savedBooks");
     },
     books: async () => {
       return await Book.find().sort({ createdAt: -1 });
     },
     book: async (_parent: any, { bookId }: BookArgs) => {
-      return await Book.findOne({ _id: bookId });
+
+      return await Book.findOne({ bookId });
     },
-    // query to get the authenticated user's information
-    // the 'me' query relies on the context to check if the user is authenticated
-    me: async (_parent: any, _args: any, context: any) => {
-      // if user is authenticated, find and return the user's information along with their thoughts
-      if (context.user) {
-        return User.findOne({ _id: context.user._id }).populate("books");
+    searchBooks: async (_parent: any, { searchInput }: SearchBooksArgs ) => {
+      const books = await Book.find({
+        $or: [
+          { title: { $regex: searchInput, $options: "i" } },
+          { authors: { $regex: searchInput, $options: "i" } },
+        ],
+      });
+      if (!books) {
+        throw new Error("No books found!");
       }
-      // if user is not authenticated, throw an AuthenticationError
+      return books;
+    }
+    ,
+    me: async (_parent: any, _args: any, context: any) => {
+      if (context.user) {
+        return User.findOne({ _id: context.user._id }).populate("savedBooks");
+      }
       throw new AuthenticationError("Could not authenticate user.");
     },
   },
   Mutation: {
     addUser: async (_parent: any, { input }: AddUserArgs) => {
-      // create a new user with the provided username, email, and password
       const user = await User.create({ ...input });
-
-      // sign a token with the user's information
       const token = signToken(user.username, user.email, user._id);
-
-      // return the token and the user
       return { token, user };
     },
 
     login: async (_parent: any, { email, password }: LoginUserArgs) => {
-      // find a user with the provided email
       const user = await User.findOne({ email });
 
-      // if no user is found, throw an AuthenticationError
       if (!user) {
         throw new AuthenticationError("Could not authenticate user.");
       }
 
-      // check if the provided password is correct
       const correctPw = await user.isCorrectPassword(password);
 
-      // if password is incorrect, throw an AuthenticationError
       if (!correctPw) {
         throw new AuthenticationError("Could not authenticate user.");
       }
 
-      // sign a token with the user's information
       const token = signToken(user.username, user.email, user._id);
-
-      // return the token and the user
       return { token, user };
     },
+
     addBook: async (_parent: any, { input }: AddBookArgs, context: any) => {
       if (context.user) {
-        const book = await Book.create({ ...input });
 
-        await User.findOneAndUpdate(
-          { _id: context.user._id },
-          { $addToSet: { books: book._id } },
-          { new: true }
-        );
+        let book = await Book.findOne({ bookId: input.bookId });
 
-        return book;
-      }
-      throw new AuthenticationError("You need to be logged in!");
-    },
-    saveBook: async (_parent: any, { bookId }: BookArgs, context: any) => {
-      if (context.user) {
+        if (!book) {
+          book = await Book.create(input);
+        }
+
+        // Add the book's `_id` (MongoDB ID) to the user's savedBooks array
         const updatedUser = await User.findOneAndUpdate(
           { _id: context.user._id },
-          { $addToSet: { savedBooks: bookId } },
+          { $addToSet: { savedBooks: book._id } },
           { new: true }
         ).populate("savedBooks");
 
@@ -120,19 +117,23 @@ const resolvers = {
       }
       throw new AuthenticationError("You need to be logged in!");
     },
+
+
     removeBook: async (_parent: any, { bookId }: BookArgs, context: any) => {
       if (context.user) {
-        const book = await Book.findOneAndDelete({
-          _id: bookId,
-        });
-
-        if (book) {
-          await User.findOneAndUpdate(
-            { _id: context.user._id },
-            { $pull: { books: book._id } }
-          );
+        const bookToRemove = await Book.findOne({ bookId });
+    
+        if (!bookToRemove) {
+          throw new Error("Book not found.");
         }
-        return book || null;
+    
+        const updatedUser = await User.findOneAndUpdate(
+          { _id: context.user._id },
+          { $pull: { savedBooks: bookToRemove._id } }, 
+          { new: true }
+        ).populate("savedBooks");
+    
+        return updatedUser;
       }
       throw new AuthenticationError("You need to be logged in!");
     },
