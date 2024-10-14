@@ -1,5 +1,5 @@
 import { useState, FormEvent } from "react";
-import { useMutation } from "@apollo/client";
+import { useMutation, useQuery } from "@apollo/client";
 import { Container, Card, Button, Row, Col, Form } from "react-bootstrap";
 import { searchGoogleBooks } from "../utils/API";
 import { ADD_BOOK } from "../utils/mutations";
@@ -13,6 +13,11 @@ const SearchBooks = () => {
   // gql mutation to add a book to the user's saved books
   const [addBook] = useMutation(ADD_BOOK, {
     refetchQueries: [GET_BOOKS, "GetBooks", GET_ME, "Getme"],
+  });
+
+  // gql query to get the logged in user's saved books
+  const { data: savedBooksData } = useQuery(GET_BOOKS, {
+    skip: !Auth.loggedIn(),
   });
 
   // form submission to search for books
@@ -43,6 +48,7 @@ const SearchBooks = () => {
     // get the token from Auth
     const token = Auth.loggedIn() ? Auth.getToken() : null;
     if (!token) {
+      console.error("User is not logged in");
       return false;
     }
 
@@ -53,7 +59,7 @@ const SearchBooks = () => {
         title: bookToSave.volumeInfo.title,
         authors: bookToSave.volumeInfo.authors || [],
         description: bookToSave.volumeInfo.description || "",
-        image: bookToSave.volumeInfo.imageLinks?.thumbnail || "",
+        image: bookToSave.volumeInfo.imageLinks?.thumbnail.replace('zoom=1', 'zoom=0') || "",
         link: bookToSave.volumeInfo.infoLink || "",
       };
 
@@ -70,6 +76,12 @@ const SearchBooks = () => {
       console.error("Error saving the book:", err);
     }
   };
+
+  // check if book is already saved
+  const isBookSaved = (bookId: string) => {
+    return savedBooksData?.books.some((book: any) => book.bookId === bookId);
+  };
+
   return (
     <>
       <div className="text-light bg-dark p-5">
@@ -111,7 +123,8 @@ const SearchBooks = () => {
               <Card border="dark">
                 {book.volumeInfo.imageLinks?.thumbnail && (
                   <Card.Img
-                    src={book.volumeInfo.imageLinks.thumbnail}
+                    className={"img-fluid"}
+                    src={book.volumeInfo.imageLinks.thumbnail.replace('zoom=1', 'zoom=0')}
                     alt={`The cover for ${book.volumeInfo.title}`}
                     variant="top"
                   />
@@ -119,17 +132,24 @@ const SearchBooks = () => {
                 <Card.Body>
                   <Card.Title>{book.volumeInfo.title}</Card.Title>
                   <p className="small">
-                    Authors: {book.volumeInfo.authors?.join(", ")}
+                    Author(s): {book.volumeInfo.authors?.join(", ")}
                   </p>
                   <Card.Text>{book.volumeInfo.description}</Card.Text>
+                  <Card.Text>
+                    <a href={book.volumeInfo.infoLink} target="_blank" rel="noreferrer">
+                      More information
+                    </a>
+                  </Card.Text>
                   {Auth.loggedIn() && (
-                    <Button
-                      className="btn-block btn-info"
+                      <Button
+                      disabled={isBookSaved(book.id)}
                       onClick={() => handleSaveBook(book.id)}
-                      // disable the button if the book is already saved
-                    
-                      Save this Book!
+                      variant="primary"
+                      className="btn-block btn-info"
+                    >
+                      {isBookSaved(book.id) ? "Book already saved" : "Save this Book!"}
                     </Button>
+                     
                   )}
                 </Card.Body>
               </Card>
