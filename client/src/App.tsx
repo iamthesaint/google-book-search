@@ -8,6 +8,28 @@ const httpLink = createHttpLink({
   uri: '/graphql',
 });
 
+const cache = new InMemoryCache({
+  typePolicies: {
+    Query: {
+      fields: {
+        savedBooks: {
+          merge(existing = [], incoming: any[]) {
+            // Ensure no duplicates by using bookId as the unique identifier
+            const mergedBooks = [...existing, ...incoming];
+            const uniqueBooks = mergedBooks.reduce((acc, book) => {
+              if (!acc.some((b: { bookId: string }) => b.bookId === book.bookId)) {
+                acc.push(book);
+              }
+              return acc;
+            }, []);
+            return uniqueBooks;
+          },
+        },
+      },
+    },
+  },
+});
+
 const authLink = setContext((_, { headers = {} }: { headers?: Record<string, string> }) => {
   const token = localStorage.getItem('id_token');
   return {
@@ -19,8 +41,8 @@ const authLink = setContext((_, { headers = {} }: { headers?: Record<string, str
 });
 
 const client = new ApolloClient({
+  cache,
   link: authLink.concat(httpLink),
-  cache: new InMemoryCache(),
 });
 
 function App() {

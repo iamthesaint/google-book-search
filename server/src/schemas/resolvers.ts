@@ -20,11 +20,13 @@ interface UserArgs {
 }
 
 interface BookArgs {
+  _id: string;
   bookId: string;
 }
 
 interface AddBookArgs {
   input: {
+    _id: string;
     bookId: string;
     title: string;
     authors: [string];
@@ -46,26 +48,24 @@ const resolvers = {
     user: async (_parent: any, { username }: UserArgs) => {
       return User.findOne({ username }).populate("savedBooks");
     },
-    books: async () => {
-      return await Book.find().sort({ createdAt: -1 });
+    savedBooks: async () => {
+      return Book.find();
     },
     book: async (_parent: any, { bookId }: BookArgs) => {
-
       return await Book.findOne({ bookId });
     },
-    searchBooks: async (_parent: any, { searchInput }: SearchBooksArgs ) => {
+    searchBooks: async (_parent: any, { searchInput }: SearchBooksArgs) => {
       const books = await Book.find({
         $or: [
           { title: { $regex: searchInput, $options: "i" } },
           { authors: { $regex: searchInput, $options: "i" } },
         ],
       });
-      if (!books) {
+      if (!books.length) {
         throw new Error("No books found!");
       }
       return books;
-    }
-    ,
+    },
     me: async (_parent: any, _args: any, context: any) => {
       if (context.user) {
         return User.findOne({ _id: context.user._id }).populate("savedBooks");
@@ -84,13 +84,13 @@ const resolvers = {
       const user = await User.findOne({ email });
 
       if (!user) {
-        throw new AuthenticationError("Could not authenticate user.");
+        throw new AuthenticationError("Invalid credentials.");
       }
 
       const correctPw = await user.isCorrectPassword(password);
 
       if (!correctPw) {
-        throw new AuthenticationError("Could not authenticate user.");
+        throw new AuthenticationError("Invalid credentials.");
       }
 
       const token = signToken(user.username, user.email, user._id);
@@ -98,41 +98,40 @@ const resolvers = {
     },
 
     addBook: async (_parent: any, { input }: AddBookArgs, context: any) => {
-      if (context.user) {
-        const existingBook = await Book.findOne({ bookId: input.bookId });
-        const book = existingBook || await Book.create(input);
-        // Add the book's `_id` (MongoDB ID) to the user's savedBooks array
-        const updatedUser = await User.findOneAndUpdate(
-          { _id: context.user._id },
-          { $addToSet: { savedBooks: book._id } },
-          { new: true }
-        ).populate("savedBooks");
-
-        return updatedUser;
+      if (!context.user) {
+        throw new AuthenticationError("You need to be logged in!");
       }
-      throw new AuthenticationError("You need to be logged in!");
+      // check if the book already exists in the database
+      const bookExists = await Book.findOne({ _id: input._id });
+      // if the book exists, return the user
+      if (bookExists) {
+        return User.findOne({ _id: context.user._id }).populate("savedBooks");
+      }
+      // if the book does not exist, create a new book and add it to the user's savedBooks list
+      const book = await Book.create({ ...input });
+      // Update the user's savedBooks list
+      const updatedUser = await User.findOneAndUpdate(
+        { _id: context.user._id },
+        { $addToSet: { savedBooks: book._id } },
+        { new: true }
+      ).populate("savedBooks");
+      return updatedUser;
     },
-
 
     removeBook: async (_parent: any, { bookId }: BookArgs, context: any) => {
-      if (context.user) {
-        const bookToRemove = await Book.findOne({ bookId });
-    
-        if (!bookToRemove) {
-          throw new Error("Book not found.");
-        }
-    
-        const updatedUser = await User.findOneAndUpdate(
-          { _id: context.user._id },
-          { $pull: { savedBooks: bookToRemove._id } }, 
-          { new: true }
-        ).populate("savedBooks");
-    
-        return updatedUser;
+      if (!context.user) {
+        throw new AuthenticationError("You need to be logged in!");
       }
-      throw new AuthenticationError("You need to be logged in!");
-    },
+      const updatedUser = await User.findOneAndUpdate(
+        { _id: context.user._id },
+        { $pull: { savedBooks: bookId } },
+        { new: true }
+      ).populate("savedBooks");
+      return updatedUser;
+    }
   },
 };
 
 export default resolvers;
+
+

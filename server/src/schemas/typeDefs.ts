@@ -22,6 +22,7 @@ const typeDefs = gql`
 
 #  defines the boook input type, which is used as an argument when adding a book to a user's list of saved books
   input BookInput {
+    _id: ID
     bookId: String!
     title: String!
     authors: [String]!
@@ -47,13 +48,13 @@ const typeDefs = gql`
     me: User
     users: [User]
     user(username: String!): User
-    books: [Book]
     book(bookId: String!): Book
+    savedBooks: [Book]
   }
 
   # defines the mutation type for modifying data
   type Mutation {
-  addUser(input: AddUserInput!): User
+  addUser(input: AddUserInput!): Auth
   login(email: String!, password: String!): Auth
   addBook(input: BookInput!): User
   removeBook(bookId: String!): User

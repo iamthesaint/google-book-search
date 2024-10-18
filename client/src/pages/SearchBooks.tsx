@@ -4,21 +4,18 @@ import { Container, Card, Button, Row, Col, Form } from "react-bootstrap";
 import { searchGoogleBooks } from "../utils/API";
 import { ADD_BOOK } from "../utils/mutations";
 import Auth from "../utils/auth";
-import { GET_BOOKS, GET_ME } from "../utils/queries";
+import { GET_BOOKS } from "../utils/queries";
 
 const SearchBooks = () => {
   const [searchedBooks, setSearchedBooks] = useState<any[]>([]);
   const [searchInput, setSearchInput] = useState<string>("");
 
-  // gql mutation to add a book to the user's saved books
-  const [addBook] = useMutation(ADD_BOOK, {
-    refetchQueries: [GET_BOOKS, "GetBooks", GET_ME, "Getme"],
-  });
+  // get user's saved books
+  const { data } = useQuery(GET_BOOKS);
+  const savedBooksData = data?.savedBooks || [];
 
-  // gql query to get the logged in user's saved books
-  const { data: savedBooksData } = useQuery(GET_BOOKS, {
-    skip: !Auth.loggedIn(),
-  });
+  // mutation to save a book
+  const [addBook] = useMutation(ADD_BOOK);
 
   // form submission to search for books
   const handleFormSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -28,8 +25,7 @@ const SearchBooks = () => {
     try {
       // trigger the search query with the search input
       const books = await searchGoogleBooks(searchInput);
-      console.log(books);
-      setSearchedBooks(books || []);
+      setSearchedBooks(books);
     } catch (err) {
       console.error("Error searching for books:", err);
     }
@@ -37,11 +33,12 @@ const SearchBooks = () => {
 
   // add a book to the user's saved list
   const handleSaveBook = async (bookId: string) => {
+    // find the book in `searchedBooks` state by the matching id
     const bookToSave = searchedBooks.find((book) => book.id === bookId);
 
-    // first, check if the book exists
+    // return if no book is found
     if (!bookToSave) {
-      console.error("Book not found in the search results");
+      console.error("Couldn't find the book to save");
       return;
     }
 
@@ -63,13 +60,11 @@ const SearchBooks = () => {
         link: bookToSave.volumeInfo.infoLink || "",
       };
 
-      // call the addbook mutation (mutation from useMutation hook)
-      const { data } = await addBook({
-        variables: { input },
-      });
+      // execute the mutation
+      const { data } = await addBook({ variables: { input } });
 
       // if the book was successfully saved, log success message with book title
-      if (data && data.addBook) {
+      if (data && data.AddBook) {
         console.log(`Book saved successfully: ${bookToSave.volumeInfo.title}`);
       }
     } catch (err) {
@@ -79,7 +74,11 @@ const SearchBooks = () => {
 
   // check if book is already saved
   const isBookSaved = (bookId: string) => {
-    return savedBooksData?.books.some((book: any) => book.bookId === bookId);
+    if (!savedBooksData) return false;
+
+    const savedBooks = savedBooksData.savedBooks || [];
+    const bookIds = savedBooks.map((book: any) => book.bookId);
+    return bookIds.includes(bookId);
   };
 
   return (
@@ -149,7 +148,6 @@ const SearchBooks = () => {
                     >
                       {isBookSaved(book.id) ? "Book already saved" : "Save this Book!"}
                     </Button>
-                     
                   )}
                 </Card.Body>
               </Card>
