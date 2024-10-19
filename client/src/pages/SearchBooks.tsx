@@ -4,15 +4,15 @@ import { Container, Card, Button, Row, Col, Form } from "react-bootstrap";
 import { searchGoogleBooks } from "../utils/API";
 import { ADD_BOOK } from "../utils/mutations";
 import Auth from "../utils/auth";
-import { GET_BOOKS } from "../utils/queries";
+import { GET_ME } from "../utils/queries";
 
 const SearchBooks = () => {
   const [searchedBooks, setSearchedBooks] = useState<any[]>([]);
   const [searchInput, setSearchInput] = useState<string>("");
 
   // get user's saved books
-  const { data } = useQuery(GET_BOOKS);
-  const savedBooksData = data?.savedBooks || [];
+  const { data } = useQuery(GET_ME);
+  const savedBooksData = data?.me?.savedBooks || [];
 
   // mutation to save a book
   const [addBook] = useMutation(ADD_BOOK);
@@ -76,8 +76,7 @@ const SearchBooks = () => {
   const isBookSaved = (bookId: string) => {
     if (!savedBooksData) return false;
 
-    const savedBooks = savedBooksData.savedBooks || [];
-    const bookIds = savedBooks.map((book: any) => book.bookId);
+    const bookIds = savedBooksData.map((book: any) => book.bookId);
     return bookIds.includes(bookId);
   };
 

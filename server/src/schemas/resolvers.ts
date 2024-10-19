@@ -102,13 +102,9 @@ const resolvers = {
         throw new AuthenticationError("You need to be logged in!");
       }
       // check if the book already exists in the database
-      const bookExists = await Book.findOne({ _id: input._id });
-      // if the book exists, return the user
-      if (bookExists) {
-        return User.findOne({ _id: context.user._id }).populate("savedBooks");
-      }
+      const bookExists = await Book.findOne({ bookId: input.bookId });
       // if the book does not exist, create a new book and add it to the user's savedBooks list
-      const book = await Book.create({ ...input });
+      const book = bookExists ? bookExists : await Book.create({ ...input });
       // Update the user's savedBooks list
       const updatedUser = await User.findOneAndUpdate(
         { _id: context.user._id },
@@ -127,6 +123,8 @@ const resolvers = {
         { $pull: { savedBooks: bookId } },
         { new: true }
       ).populate("savedBooks");
+      
+
       return updatedUser;
     }
   },

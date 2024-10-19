@@ -1,13 +1,13 @@
 import { useQuery, useMutation } from '@apollo/client';
 import { useEffect, useState } from 'react';
 import { Container, Card, Button, Row, Col } from 'react-bootstrap';
-import { GET_BOOKS } from '../utils/queries';
+import { GET_ME } from '../utils/queries';
 import { REMOVE_BOOK } from '../utils/mutations';
 import Auth from '../utils/auth';
 
 const SavedBooks = () => {
   // Query to get the logged-in user's saved books
-  const { loading, error, data } = useQuery(GET_BOOKS, {
+  const { loading, error, data } = useQuery(GET_ME, {
     skip: !Auth.loggedIn(),
   });
 
@@ -19,49 +19,40 @@ const SavedBooks = () => {
 
   // Set the saved books when data is received from the query
   useEffect(() => {
-    if (data && data.savedBooks) {
-      setSavedBooks(data.savedBooks);
+    if (data && data.me && data.me.savedBooks) {
+      setSavedBooks(data.me.savedBooks); // Adjust the path to data.me.savedBooks
     }
   }, [data]);
 
+
   // Function to handle deleting a book
-const handleDeleteBook = async (_id: string) => {
-  const token = Auth.loggedIn() ? Auth.getToken() : null;
+  const handleDeleteBook = async (_id: string) => {
+    try {
+      // Execute the mutation to remove the book
+      const { data } = await removeBook({
+        variables: { bookId: _id },
+      });
 
-  if (!token) {
-    console.error('User is not logged in');
-    return false;
-  }
+      // Update the savedBooks state with the filtered array
+      setSavedBooks(savedBooks.filter((book) => book._id !== _id));
+  
+      // Log the result of the mutation
+      console.log("Mutation response:", data);
+  
+      // Log or handle the returned data from the backend to ensure the deletion
+      if (!data?.removeBook) {
+        console.error('Failed to remove book, backend returned null or undefined');
+        return false;
+      }
+  
+      console.log(`Book with _id: ${_id} successfully removed.`);
+    } catch (err) {
+      // Log any error caught during the operation
+      console.error("Error occurred while removing the book:", err);
+    }
+  };
 
-  try {
-    await removeBook({
-      variables: { bookId: _id }, // Use _id as bookId in the mutation
-      update: (cache) => {
-        const existingData: { savedBooks: { _id: string; title: string; authors: string[]; description: string; image?: string }[] } | null = cache.readQuery({ query: GET_BOOKS });
-        console.log("Existing Data:", existingData);
-
-        if (existingData) {
-          // Filter out the removed book by _id
-          const updatedBooks = existingData.savedBooks.filter((book: any) => book._id !== _id);
-          console.log("Updated Books:", updatedBooks);
-
-          // Write the updated books back to the cache
-          cache.writeQuery({
-            query: GET_BOOKS,
-            data: { savedBooks: updatedBooks },
-          });
-
-          // Update the state to reflect the changes
-          setSavedBooks(updatedBooks);
-        }
-      },
-    });
-  } catch (err) {
-    console.error('Error removing book:', err);
-  }
-};
-
-
+  
   // Handle loading or error state
   if (loading) return <h2>Loading...</h2>;
   if (error) return <h2>Error loading saved books</h2>;

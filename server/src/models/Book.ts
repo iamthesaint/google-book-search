@@ -2,7 +2,7 @@ import { Schema, model, Document } from 'mongoose';
 
 // define an interface for the Book document
 interface IBook extends Document {
-  bookId: string;
+  bookId?: string;
   title: string;
   authors: string[];
   description?: string;
@@ -15,7 +15,6 @@ const bookSchema = new Schema<IBook>(
   {
     bookId: {
       type: String,
-      required: true, 
       unique: true,
     },
     title: {

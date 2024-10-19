@@ -41,7 +41,6 @@ const SignupForm = ({ handleModalClose }: { handleModalClose: () => void }) => {
             username: formState.username,
             email: formState.email,
             password: formState.password,
-            savedBooks: [],
           },
         },
       });

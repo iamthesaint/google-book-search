@@ -1,3 +1,4 @@
+import { InMemoryCache, ApolloClient } from '@apollo/client';
 import { type JwtPayload, jwtDecode } from 'jwt-decode';
 
 // Extending the JwtPayload interface to include additional data fields specific to the application.
@@ -49,13 +50,34 @@ class AuthService {
   // This method logs in the user by storing the token in localStorage and redirecting to the home page.
   login(idToken: string) {
     localStorage.setItem('id_token', idToken);
+    const cache = new InMemoryCache({
+      typePolicies: {
+        Book: {
+          keyFields: ["_id"],
+        }
+      }
+    }
+    );
+    const client = new ApolloClient({
+      cache,
+      uri: '/graphql',
+    });
+    client.clearStore();
     window.location.assign('/');
   }
 
   // This method logs out the user by removing the token from localStorage and redirecting to the home page.
   logout() {
     localStorage.removeItem('id_token');
+    //reset the Apollo cache
+    const cache = new InMemoryCache();
+    const client = new ApolloClient({
+      cache,
+      uri: '/graphql',
+    });
+    client.clearStore();
     window.location.assign('/');
+
   }
 }
 
