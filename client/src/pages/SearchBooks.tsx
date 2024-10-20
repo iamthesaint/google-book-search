@@ -56,7 +56,11 @@ const SearchBooks = () => {
         title: bookToSave.volumeInfo.title,
         authors: bookToSave.volumeInfo.authors || [],
         description: bookToSave.volumeInfo.description || "",
-        image: bookToSave.volumeInfo.imageLinks?.thumbnail.replace('zoom=1', 'zoom=0') || "",
+        image:
+          bookToSave.volumeInfo.imageLinks?.thumbnail.replace(
+            "zoom=1",
+            "zoom=0"
+          ) || "",
         link: bookToSave.volumeInfo.infoLink || "",
       };
 
@@ -115,37 +119,64 @@ const SearchBooks = () => {
             ? `Viewing ${searchedBooks.length} results:`
             : "Search for a book to begin"}
         </h2>
-        <Row>
+        <Row className="d-flex flex-wrap">
           {searchedBooks.map((book) => (
-            <Col md="4" key={book.id}>
-              <Card border="dark">
+            <Col md="4" key={book.id} className="d-flex">
+              <Card
+                className="mb-4 flex-fill"
+                style={{
+                  maxHeight: "900px",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+                border="dark"
+              >
                 {book.volumeInfo.imageLinks?.thumbnail && (
                   <Card.Img
                     className={"img-fluid"}
-                    src={book.volumeInfo.imageLinks.thumbnail.replace('zoom=1', 'zoom=0')}
+                    src={book.volumeInfo.imageLinks.thumbnail.replace(
+                      "zoom=1",
+                      "zoom=0"
+                    )}
                     alt={`The cover for ${book.volumeInfo.title}`}
                     variant="top"
+                    style={{
+                      objectFit: "contain",
+                      width: "100%",
+                      height: "600px",
+                    }}
                   />
                 )}
-                <Card.Body>
+                <Card.Body
+                  className="d-flex flex-column"
+                  style={{ flex: "1 1 auto" }}
+                >
                   <Card.Title>{book.volumeInfo.title}</Card.Title>
                   <p className="small">
                     Author(s): {book.volumeInfo.authors?.join(", ")}
                   </p>
-                  <Card.Text>{book.volumeInfo.description}</Card.Text>
+                  <Card.Text style={{ maxHeight: "100px", overflow: "auto" }}>
+                    {book.volumeInfo.description}
+                  </Card.Text>
                   <Card.Text>
-                    <a href={book.volumeInfo.infoLink} target="_blank" rel="noreferrer">
+                    <a
+                      href={book.volumeInfo.infoLink}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
                       More information
                     </a>
                   </Card.Text>
                   {Auth.loggedIn() && (
-                      <Button
+                    <Button
                       disabled={isBookSaved(book.id)}
                       onClick={() => handleSaveBook(book.id)}
                       variant="primary"
                       className="btn-block btn-info"
                     >
-                      {isBookSaved(book.id) ? "Book already saved" : "Save this Book!"}
+                      {isBookSaved(book.id)
+                        ? "Book already saved"
+                        : "Save this Book!"}
                     </Button>
                   )}
                 </Card.Body>
