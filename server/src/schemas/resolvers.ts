@@ -49,10 +49,15 @@ const resolvers = {
       return User.findOne({ username }).populate("savedBooks");
     },
     savedBooks: async () => {
-      return Book.find();
-    },
-    book: async (_parent: any, { bookId }: BookArgs) => {
-      return await Book.findOne({ bookId });
+      const savedBooks = await Book.find();
+      return savedBooks.map((book => ({...book.toObject(), title: book.title || ["unknown title"], authors: book.authors || ["unknown author"], description: book.description || "no description", image: book.image || "no image", link: book.link || "no link"})));
+      },
+    book: async (_parent: any, { bookId }: { bookId: string }) => {
+      const book = await Book.findOne({ bookId });
+      if (!book) {
+        throw new Error("Book not found");
+      }
+      return book;
     },
     searchBooks: async (_parent: any, { searchInput }: SearchBooksArgs) => {
       const books = await Book.find({
@@ -123,13 +128,10 @@ const resolvers = {
         { $pull: { savedBooks: bookId } },
         { new: true }
       ).populate("savedBooks");
-      
 
       return updatedUser;
-    }
+    },
   },
 };
 
 export default resolvers;
-
-

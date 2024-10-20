@@ -4,7 +4,7 @@ const typeDefs = gql`
 
   type Book {
     _id: ID
-    bookId: String!
+    bookId: String
     title: String!
     authors: [String]!
     description: String
@@ -23,7 +23,7 @@ const typeDefs = gql`
 #  defines the boook input type, which is used as an argument when adding a book to a user's list of saved books
   input BookInput {
     _id: ID
-    bookId: String!
+    bookId: String
     title: String!
     authors: [String]!
     description: String

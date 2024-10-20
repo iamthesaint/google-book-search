@@ -76,7 +76,7 @@ const SearchBooks = () => {
   const isBookSaved = (bookId: string) => {
     if (!savedBooksData) return false;
 
-    const bookIds = savedBooksData.map((book: any) => book.bookId);
+    const bookIds = savedBooksData.map((book: any) => book.bookId || book._id);
     return bookIds.includes(bookId);
   };
 
