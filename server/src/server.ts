@@ -34,6 +34,10 @@ const startApolloServer = async () => {
     app.get('*', (_req: Request, res: Response) => {
       res.sendFile(path.join(__dirname, '../client/dist/index.html'));
     });
+  } else {
+    app.get('/', (_req: Request, res: Response) => {
+      res.send('Welcome to the API server!');
+    });
   }
 
   app.listen(PORT, () => {
