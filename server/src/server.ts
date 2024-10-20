@@ -1,15 +1,15 @@
 import express from 'express';
 import path from 'node:path';
 import type { Request, Response } from 'express';
-import db from './config/connection.js'
-import { ApolloServer } from '@apollo/server';// Note: Import from @apollo/server-express
+import db from './config/connection.js';
+import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { typeDefs, resolvers } from './schemas/index.js';
 import { authenticateToken } from './utils/auth.js';
 
 const server = new ApolloServer({
   typeDefs,
-  resolvers
+  resolvers,
 });
 
 const startApolloServer = async () => {
@@ -22,21 +22,18 @@ const startApolloServer = async () => {
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
 
-  app.use('/graphql', expressMiddleware(server as any,
-    {
-      context: authenticateToken as any
-    }
-  ));
+  app.use('/graphql', expressMiddleware(server as any, {
+    context: authenticateToken as any,
+  }));
 
+  // Serve static files from the client dist folder in production
   if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.join(__dirname, '../client/dist')));
+    const clientBuildPath = path.join(process.cwd(), '../client/dist');  // Updated path
+    app.use(express.static(clientBuildPath));
 
+    // Fallback route for any request that doesn't match /graphql
     app.get('*', (_req: Request, res: Response) => {
-      res.sendFile(path.join(__dirname, '../client/dist/index.html'));
-    });
-  } else {
-    app.get('/', (_req: Request, res: Response) => {
-      res.send('Welcome to the API server!');
+      res.sendFile(path.join(clientBuildPath, 'index.html'));
     });
   }
 
