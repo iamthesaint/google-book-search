@@ -15,6 +15,8 @@ const SignupForm = ({ handleModalClose }: { handleModalClose: () => void }) => {
   const [showAlert, setShowAlert] = useState(false);
   // GQL mutation to add a user
   const [addUser] = useMutation(ADD_USER);
+  // alert state
+  const [alertMessage, setAlertMessage] = useState('');
 
   // Handle input change
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -50,8 +52,25 @@ const SignupForm = ({ handleModalClose }: { handleModalClose: () => void }) => {
 
       // Close the signup modal if applicable
       handleModalClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+
+      if (err.graphQLErrors && err.graphQLErrors.length > 0) {
+        const errorMessage = err.graphQLErrors[0].message;
+
+        if (errorMessage.includes('email: Must match an email address!')) {
+          setAlertMessage('Please provide a valid email address.');
+        } else if (errorMessage.includes('password: Path `password` is shorter')) {
+          setAlertMessage('Password must be at least 5 characters long.');
+        } else {
+          setAlertMessage('An unexpected error occurred. Please try again later.');
+        }
+      } else if (err.networkError) {
+        setAlertMessage('Network error. Please check your connection and try again.');
+      } else {
+        setAlertMessage('Something went wrong with your signup!');
+      }
+
       setShowAlert(true);
     }
 
@@ -62,13 +81,21 @@ const SignupForm = ({ handleModalClose }: { handleModalClose: () => void }) => {
       password: '',
       savedBooks: [],
     });
-  };
+  }
+
+    // Reset the form state after submission
+    setFormState({
+      username: '',
+      email: '',
+      password: '',
+      savedBooks: [],
+    });
 
   return (
     <>
       <Form noValidate validated={validated} onSubmit={handleFormSubmit}>
         <Alert dismissible onClose={() => setShowAlert(false)} show={showAlert} variant="danger">
-          Something went wrong with your signup!
+          {alertMessage}
         </Alert>
 
         <Form.Group className="mb-3">

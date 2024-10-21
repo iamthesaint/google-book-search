@@ -16,6 +16,7 @@ const LoginForm = ({ handleModalClose }: { handleModalClose: () => void }) => {
   const [login] = useMutation(LOGIN_USER);
   const [validated, _] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
@@ -46,8 +47,26 @@ const LoginForm = ({ handleModalClose }: { handleModalClose: () => void }) => {
       handleModalClose();
     } catch (e) {
       console.error(e);
+
+      if ((e as any).graphQLErrors && (e as any).graphQLErrors.length > 0) {
+        const errorMessage = (e as any).graphQLErrors[0].message;
+    
+        if (errorMessage.includes('Invalid credentials')) {
+          setAlertMessage('Invalid credentials. Please check your email and password.');
+        } else {
+          setAlertMessage('An error occurred: ' + errorMessage);
+        }
+      } else if ((e as any).networkError) {
+        setAlertMessage('Network error. Please check your connection and try again.');
+      } else {
+        setAlertMessage('Something went wrong with your login credentials!');
+      }
+    
       setShowAlert(true);
     }
+
+
+
 
     // Reset form state after submission
     setFormState({
@@ -62,7 +81,7 @@ const LoginForm = ({ handleModalClose }: { handleModalClose: () => void }) => {
     <>
       <Form noValidate validated={validated} onSubmit={handleFormSubmit}>
         <Alert dismissible onClose={() => setShowAlert(false)} show={showAlert} variant='danger'>
-          Something went wrong with your login credentials!
+          {alertMessage}
         </Alert>
         <Form.Group className='mb-3'>
           <Form.Label htmlFor='email'>Email</Form.Label>
