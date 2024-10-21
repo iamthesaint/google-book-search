@@ -9,14 +9,12 @@ import type { User } from '../models/User';
 const SignupForm = ({ handleModalClose }: { handleModalClose: () => void }) => {
   // Set initial form state
   const [formState, setFormState] = useState<User>({ username: '', email: '', password: '', savedBooks: [] });
-  // Set state for form validation
   const [validated] = useState(false);
-  // Set state for alert
   const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  
   // GQL mutation to add a user
   const [addUser] = useMutation(ADD_USER);
-  // alert state
-  const [alertMessage, setAlertMessage] = useState('');
 
   // Handle input change
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -28,7 +26,7 @@ const SignupForm = ({ handleModalClose }: { handleModalClose: () => void }) => {
   const handleFormSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    // Check if form is valid (as per react-bootstrap docs)
+    // Form validation check
     const form = event.currentTarget;
     if (form.checkValidity() === false) {
       event.preventDefault();
@@ -38,26 +36,19 @@ const SignupForm = ({ handleModalClose }: { handleModalClose: () => void }) => {
     try {
       // GQL mutation to add a user
       const { data } = await addUser({
-        variables: { input:
-          {
-            username: formState.username,
-            email: formState.email,
-            password: formState.password,
-          },
-        },
+        variables: { input: { username: formState.username, email: formState.email, password: formState.password } }
       });
 
       // Log the user in after successful signup
       Auth.login(data.addUser.token);
-
-      // Close the signup modal if applicable
       handleModalClose();
+
     } catch (err: any) {
       console.error(err);
 
+      // Handle specific error messages for email and password
       if (err.graphQLErrors && err.graphQLErrors.length > 0) {
         const errorMessage = err.graphQLErrors[0].message;
-
         if (errorMessage.includes('email: Must match an email address!')) {
           setAlertMessage('Please provide a valid email address.');
         } else if (errorMessage.includes('password: Path `password` is shorter')) {
@@ -81,15 +72,7 @@ const SignupForm = ({ handleModalClose }: { handleModalClose: () => void }) => {
       password: '',
       savedBooks: [],
     });
-  }
-
-    // Reset the form state after submission
-    setFormState({
-      username: '',
-      email: '',
-      password: '',
-      savedBooks: [],
-    });
+  };
 
   return (
     <>

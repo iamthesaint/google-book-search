@@ -5,8 +5,8 @@ const typeDefs = gql`
   type Book {
     _id: ID
     bookId: String
-    title: String!
-    authors: [String]!
+    title: String
+    authors: [String]
     description: String
     image: String
     link: String
@@ -14,9 +14,9 @@ const typeDefs = gql`
 
   type User {
     _id: ID
-    username: String!
-    email: String!
-    password: String!
+    username: String
+    email: String
+    password: String
     savedBooks: [Book]
   }
 
@@ -24,41 +24,41 @@ const typeDefs = gql`
   input BookInput {
     _id: ID
     bookId: String
-    title: String!
-    authors: [String]!
+    title: String
+    authors: [String]
     description: String
     image: String
     link: String
   }
 
   input AddUserInput {
-    username: String!
-    email: String!
-    password: String!
+    username: String
+    email: String
+    password: String
     savedBooks: [BookInput]
   }
 
   type Auth {
-    token: ID!
+    token: ID
     user: User
   }
 
 #  defines query type for getting data
   type Query {
-    searchBooks(searchInput: String!): [Book]!
+    searchBooks(searchInput: String): [Book]
     me: User
     users: [User]
-    user(username: String!): User
-    book(bookId: String!): Book
+    user(username: String): User
+    book(bookId: String): Book
     savedBooks: [Book]
   }
 
   # defines the mutation type for modifying data
   type Mutation {
-  addUser(input: AddUserInput!): Auth
-  login(email: String!, password: String!): Auth
-  addBook(input: BookInput!): User
-  removeBook(bookId: String!): User
+  addUser(input: AddUserInput): Auth
+  login(email: String, password: String): Auth
+  addBook(input: BookInput): User
+  removeBook(bookId: String): User
 }
 `;
 
